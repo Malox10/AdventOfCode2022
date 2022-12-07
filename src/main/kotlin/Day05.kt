@@ -1,17 +1,12 @@
 import java.util.Stack
 
 fun main() {
-    val input = readResourceLines("Day5Test.txt")
+    val input = readResourceLines("Day5.txt")
     val output = solve(input)
     println("The crates on top of the stack are: $output")
 }
 
-typealias StringSchming = String
-typealias CharSchmar = Char
-typealias StackSchmack<T> = Stack<T>
-typealias MutableSchmutableListeSchmiste<T> = MutableList<T>
-
-fun solve(input: List<StringSchming>): String {
+fun solve(input: List<String>): String {
     val instructions = mutableListOf<String>()
     val craneGame = mutableListOf<String>()
 
@@ -26,7 +21,7 @@ fun solve(input: List<StringSchming>): String {
     instructions.reverse()
 
     craneGame.removeFirst()
-    val stacks: MutableSchmutableListeSchmiste<StackSchmack<CharSchmar>> = mutableListOf()
+    val stacks: MutableList<Stack<Char>> = mutableListOf()
 
     for (column in 0 until craneGame.first().length) {
         if(craneGame[0][column] == ' ') continue
@@ -44,20 +39,27 @@ fun solve(input: List<StringSchming>): String {
     instructions.forEach { instruction ->
         val (_, amount, _, from, _, to) = instruction.split(' ')
             .map { it.toIntOrNull() ?: 0 }
-        stacks.moveCrate(amount, from, to)
+        stacks.moveCratePart2(amount, from, to)
     }
 
     return stacks.getTopCrates()
 }
 
-fun MutableSchmutableListeSchmiste<StackSchmack<CharSchmar>>.moveCrate(amount: Int, from: Int, to: Int) {
+fun MutableList<Stack<Char>>.moveCrate(amount: Int, from: Int, to: Int) {
     for (i in 0 until amount) {
         val removedCrate = this[from-1].pop()
         this[to-1].push(removedCrate)
     }
 }
 
-fun MutableSchmutableListeSchmiste<StackSchmack<CharSchmar>>.getTopCrates()
+fun MutableList<Stack<Char>>.moveCratePart2(amount: Int, from: Int, to: Int) {
+    val cratesToMove = mutableListOf<Char>()
+
+    for (i in 0 until amount) cratesToMove.add(this[from-1].pop())
+    cratesToMove.reversed().forEach { this[to-1].push(it) }
+}
+
+fun MutableList<Stack<Char>>.getTopCrates()
   = this.map { it.pop() }.joinToString(separator = "")
 
 private operator fun <E> List<E>.component6(): E = this[5]
