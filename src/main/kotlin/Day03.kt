@@ -1,6 +1,7 @@
 fun main() {
     val input = readResourceLines("Day3.txt")
-    val output = findTheCommonElement(input)
+//    val output = findTheCommonElement(input)
+    val output = findTheBadge(input)
     println("The sum of the common characters is: $output")
 }
 
@@ -9,5 +10,11 @@ fun findTheCommonElement(input: List<String>) = input.map { line ->
         val secondHalf = line.substring(line.length/2).toSet()
 
         val commonCharacter = firstHalf.intersect(secondHalf).first()
-        commonCharacter.code - if (commonCharacter.isUpperCase()) 38 else 96
+        commonCharacter.toPriority()
     }.sum()
+
+fun Char.toPriority() = this.code - if (this.isUpperCase()) 38 else 96
+
+fun findTheBadge(input: List<String>) = input.chunked(3).sumOf { chunk ->
+    chunk.map { it.toSet() }.reduce { a, b -> a.intersect(b) }.first().toPriority()
+}
