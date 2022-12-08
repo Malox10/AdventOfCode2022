@@ -1,9 +1,40 @@
 fun main() {
     val input = readResourceLines("Day8.txt")
-    val output = findVisibleTrees(input)
+//    val output = findVisibleTrees(input)
+    val output = mostVisibleTree(input)
     println("$output")
 }
 
+fun mostVisibleTree(input: List<String>): Int {
+    val heightMap = input.map { row -> row.map { it.digitToInt() } }
+    val height = input.size
+    val width = input.first().length
+
+    return heightMap.flatMapIndexed { rowIndex, trees ->
+        trees.mapIndexed { columnIndex, tree ->
+            val directions = listOf(
+                Pair(rowIndex..rowIndex, (0 until columnIndex).reversed()), //west
+                Pair(rowIndex..rowIndex, columnIndex + 1 until width), //east
+                Pair((0 until rowIndex).reversed(), columnIndex..columnIndex), //north
+                Pair(rowIndex + 1 until height, columnIndex..columnIndex), //south
+            )
+
+            val lookingDirections = directions.map { (rowIndices, columnIndices) ->
+                var numberOfVisibleTrees = 0
+                for (row in rowIndices) {
+                    for (column in columnIndices) {
+                        numberOfVisibleTrees++
+                        if(heightMap[row][column] >= tree) return@map numberOfVisibleTrees
+                    }
+                }
+                numberOfVisibleTrees
+            }
+            lookingDirections.reduce { a,b -> a * b}
+        }
+    }.max()
+}
+
+@Suppress("unused")
 fun findVisibleTrees(input: List<String>): Int {
     val height = input.size
     val width = input.first().length
