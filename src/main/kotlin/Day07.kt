@@ -2,10 +2,20 @@ import java.util.*
 
 fun main() {
     val input = readResourceLines("Day7.txt")
-    val output = findDirectories(input)
+//    val output = findDirectories(input)
+    val output = findDirectoryToDelete(input)
     println("$output")
 }
 
+fun findDirectoryToDelete(input: List<String>): Long {
+    val tree = DoubleLinkedTree(input, Node(Type.Directory, "/", null))
+    val directorySizes = tree.getSetOfDirectories().map { it.getDirectorySize() }
+    val remainingSpace = 70000000 - directorySizes.max()
+
+    return directorySizes.map { remainingSpace + it }.filter { it >= 30000000 }.minOf { it } - remainingSpace
+}
+
+@Suppress("unused")
 fun findDirectories(input: List<String>): Long {
     val tree = DoubleLinkedTree(input, Node(Type.Directory, "/", null))
 
