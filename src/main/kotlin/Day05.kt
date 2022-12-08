@@ -2,11 +2,11 @@ import java.util.Stack
 
 fun main() {
     val input = readResourceLines("Day5.txt")
-    val output = solve(input)
+    val output = findTopCrates(input)
     println("The crates on top of the stack are: $output")
 }
 
-fun solve(input: List<String>): String {
+fun findTopCrates(input: List<String>): String {
     val instructions = mutableListOf<String>()
     val craneGame = mutableListOf<String>()
 
@@ -45,6 +45,7 @@ fun solve(input: List<String>): String {
     return stacks.getTopCrates()
 }
 
+@Suppress("unused")
 fun MutableList<Stack<Char>>.moveCrate(amount: Int, from: Int, to: Int) {
     for (i in 0 until amount) {
         val removedCrate = this[from-1].pop()
