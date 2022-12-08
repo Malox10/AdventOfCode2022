@@ -1,3 +1,5 @@
+@file:Suppress("BooleanMethodIsAlwaysInverted")
+
 fun main() {
     val input = readResourceLines("Day4.txt")
 //    val output = findContainingWorkSchedules(input)
@@ -6,6 +8,7 @@ fun main() {
     println("The amount of schedules that overlap each other are: $output")
 }
 
+@Suppress("unused")
 fun findContainingWorkSchedules(input: List<String>) = input.count { line ->
     val (first, second) = line.toPairs()
     if (first.roomCount() > second.roomCount()) first.contains(second) else second.contains(first)

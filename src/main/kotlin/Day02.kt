@@ -5,6 +5,7 @@ fun main() {
     println("The expected Score is $output")
 }
 
+@Suppress("unused")
 fun calculateScores(list: List<String>) = list.sumOf { calculateScore(it) }
 fun calculateScore(element: String): Int {
         val (opponentString, youString) = element.split(" ")

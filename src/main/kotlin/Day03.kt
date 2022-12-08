@@ -5,13 +5,14 @@ fun main() {
     println("The sum of the common characters is: $output")
 }
 
-fun findTheCommonElement(input: List<String>) = input.map { line ->
-        val firstHalf = line.substring(0, line.length/2).toSet()
-        val secondHalf = line.substring(line.length/2).toSet()
+@Suppress("unused")
+fun findTheCommonElement(input: List<String>) = input.sumOf { line ->
+    val firstHalf = line.substring(0, line.length / 2).toSet()
+    val secondHalf = line.substring(line.length / 2).toSet()
 
-        val commonCharacter = firstHalf.intersect(secondHalf).first()
-        commonCharacter.toPriority()
-    }.sum()
+    val commonCharacter = firstHalf.intersect(secondHalf).first()
+    commonCharacter.toPriority()
+}
 
 fun Char.toPriority() = this.code - if (this.isUpperCase()) 38 else 96
 

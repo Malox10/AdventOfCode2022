@@ -6,7 +6,7 @@ fun main() {
 }
 
 fun findMarker(iterator: Iterator<Char>, length: Int): Int {
-    val buffer = Array<Char>(length) { iterator.next() }
+    val buffer = Array(length) { iterator.next() }
     var position = length
     if(buffer.uniqueElements() == length) return position
 
