@@ -16,6 +16,13 @@ fun findTheCommonElement(input: List<String>) = input.sumOf { line ->
 
 fun Char.toPriority() = this.code - if (this.isUpperCase()) 38 else 96
 
-fun findTheBadge(input: List<String>) = input.chunked(3).sumOf { chunk ->
-    chunk.map { it.toSet() }.reduce { a, b -> a.intersect(b) }.first().toPriority()
-}
+fun findTheBadge(input: List<String>) =
+    input
+        .chunked(3)
+        .sumOf { chunk ->
+            chunk
+                .map { it.toSet() }
+                .reduce { a, b -> a.intersect(b) }
+                .first()
+                .toPriority()
+        }

@@ -1,7 +1,7 @@
 fun main() {
     val input = readResourceLines("Day2.txt")
-//    val output = calculateScores(input)
-    val output = calculateScorePart2(input)
+    val output = calculateScores(input)
+//    val output = calculateScorePart2(input)
     println("The expected Score is $output")
 }
 
