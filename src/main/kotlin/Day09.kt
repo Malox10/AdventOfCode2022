@@ -7,7 +7,8 @@ fun main() {
 }
 
 fun findVisitedLocations(input: List<String>): Int {
-    val rope = Rope()
+//    val rope = Rope()
+    val rope = LongRope()
     input.forEach { line ->
         val (direction, amount) = line.split(" ")
 
@@ -22,13 +23,13 @@ fun findVisitedLocations(input: List<String>): Int {
         rope.move(move, amount.toInt())
     }
 
-    return rope.visitedLocations.size
+    return rope.tailVisitedLocations.size
 }
 
 class Rope() {
     private var tailPosition: Pair<Int, Int> = Pair(0, 0)
     private var headPosition: Pair<Int, Int> = Pair(0, 0)
-    val visitedLocations: MutableSet<Pair<Int, Int>> = mutableSetOf()
+    val tailVisitedLocations = mutableSetOf<Pair<Int, Int>>()
 
     private fun isCovered() = tailPosition == headPosition
 
@@ -40,7 +41,7 @@ class Rope() {
     fun move(move: Move, amount: Int) {
         for (i in 1..amount) {
             moveOne(move)
-            visitedLocations.add(tailPosition)
+            tailVisitedLocations.add(tailPosition)
 //            printGrid()
         }
     }
@@ -91,3 +92,67 @@ enum class Move(val position: Pair<Int, Int>) {
 
 operator fun Pair<Int, Int>.plus(other: Pair<Int, Int>) = Pair(this.first + other.first, this.second + other.second)
 operator fun Pair<Int, Int>.minus(other: Pair<Int, Int>) = Pair(this.first - other.first, this.second - other.second)
+operator fun Pair<Int, Int>.div(other: Int) = Pair(this.first / other, this.second / other)
+
+class LongRope() {
+    private val knotList = MutableList(10) { Pair(0, 0) }
+    val tailVisitedLocations: MutableSet<Pair<Int, Int>> = mutableSetOf()
+
+    fun move(move: Move, amount: Int) {
+        for (i in 1..amount) {
+            moveOne(move)
+            tailVisitedLocations.add(knotList[knotList.size - 1])
+//            printGrid()
+        }
+    }
+
+    @Suppress("unused")
+    private fun printGrid() {
+        val grid = List(5) { MutableList(6) { "." } }
+        grid[4][0] = "S"
+        for (i in knotList.indices.reversed()) {
+            val text = if(i == 0) "H" else i.toString()
+            val (x, y) = knotList[i]
+            grid[4 - y][x] = text
+        }
+
+        grid.forEach { line ->
+            line.forEach { character ->
+                print(character)
+            }
+            print("\n")
+        }
+        print("\n")
+    }
+
+    private fun moveOne(move: Move) {
+        knotList.forEachIndexed { index, currentKnot ->
+            if(index == 0) {
+                knotList[index] += move.position
+                return@forEachIndexed
+            }
+            val knotInFront = knotList[index - 1]
+            if(knotInFront.isAdjacentTo(currentKnot)) { return@forEachIndexed }
+
+            val delta = knotInFront - currentKnot
+            if(knotInFront.isTwoStepsAheadOf(currentKnot)) {
+                knotList[index] += delta / 2
+                return@forEachIndexed
+            } else {
+                knotList[index] += if(delta.first > 0) Move.Right.position else Move.Left.position
+                knotList[index] += if(delta.second > 0) Move.Up.position else Move.Down.position
+            }
+        }
+    }
+}
+
+private fun Pair<Int, Int>.isAdjacentTo(other: Pair<Int, Int>): Boolean {
+    val delta = this - other
+    return !(delta.first.absoluteValue > 1 || delta.second.absoluteValue > 1)
+}
+
+private fun Pair<Int, Int>.isTwoStepsAheadOf(other: Pair<Int, Int>): Boolean {
+    val delta = this - other
+    return delta.first.absoluteValue == 2 && delta.second.absoluteValue == 0
+            || delta.second.absoluteValue == 2 && delta.first.absoluteValue == 0
+}
