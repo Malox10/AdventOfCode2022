@@ -32,6 +32,7 @@ class CPU {
     var signalAccumulator = 0
 
     private fun finishCycle() {
+        draw()
         cycle++
         if(cycle % 40 == 20) {
             signalAccumulator += xRegister * cycle
@@ -47,5 +48,13 @@ class CPU {
                 xRegister += instruction.value
             }
         }
+    }
+
+    private fun draw() {
+        val rayPosition = cycle % 40
+        val registerRange = xRegister-1..xRegister+1
+
+        if(rayPosition == 0) print("\n")
+        if(registerRange.contains(rayPosition)) print("#") else print(".")
     }
 }
