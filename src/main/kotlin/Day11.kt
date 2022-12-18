@@ -1,13 +1,14 @@
+@file:Suppress("unused")
 import java.util.*
 import kotlin.math.floor
 
 fun main() {
     val input = readResource("Day11.txt")
-    val output = solve(input)
+    val output = findAmountOfMonkeyBusiness(input)
     println("$output")
 }
 
-fun solve(input: String): Long {
+fun findAmountOfMonkeyBusiness(input: String): Long {
     val monkeyInfos = input.split("Monkey ").drop(1)
     val monkeys = monkeyInfos.map { monkeyInfo ->
         val (monkeyNumber, monkeyItems, monkeyOperation, monkeyTest, monkeyTestTrue, monkeyTestFalse) = monkeyInfo.lines()

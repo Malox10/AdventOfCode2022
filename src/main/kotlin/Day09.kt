@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 import kotlin.math.absoluteValue import kotlin.math.sign
 
 fun main() {
@@ -147,6 +148,6 @@ private fun Pair<Int, Int>.isTwoStepsAheadOf(other: Pair<Int, Int>): Boolean {
             || delta.second.absoluteValue == 2 && delta.first.absoluteValue == 0
 }
 
-operator fun Pair<Int, Int>.plus(other: Pair<Int, Int>) = Pair(this.first + other.first, this.second + other.second)
-operator fun Pair<Int, Int>.minus(other: Pair<Int, Int>) = Pair(this.first - other.first, this.second - other.second)
-operator fun Pair<Int, Int>.div(other: Int) = Pair(this.first / other, this.second / other)
+private operator fun Pair<Int, Int>.plus(other: Pair<Int, Int>) = Pair(this.first + other.first, this.second + other.second)
+private operator fun Pair<Int, Int>.minus(other: Pair<Int, Int>) = Pair(this.first - other.first, this.second - other.second)
+private operator fun Pair<Int, Int>.div(other: Int) = Pair(this.first / other, this.second / other)
