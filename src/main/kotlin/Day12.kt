@@ -1,5 +1,7 @@
+@file:Suppress("unused")
 import java.util.*
 import kotlin.math.absoluteValue
+import AStarPathFinder.*
 
 fun main() {
     val input = readResourceLines("Day12.txt")
@@ -28,10 +30,47 @@ fun findPathLength(input: List<String>): Int {
             height
         }
     }
+//part 1
+//    val pathFinder = AStarPathFinder(
+//        grid,
+//        AStarNode(start, null, 0, start.distanceBetween(end)),
+//        AStarNode(end, null, 0, 0)
+//    )
+//    val path = pathFinder.findShortestPath()
+//    printPath(path, input)
+//    return path.currentPathLength
 
-    val path = aStar(grid, AStarNode(start, null, 0, start.distanceBetween(end)), AStarNode(end, null, 0))
-    printPath(path, input)
-    return path.currentPathLength
+
+//part2
+    return findShortestPathLength(grid, end)
+}
+
+fun findShortestPathLength(grid: List<List<Int>>, end: Pair<Int, Int>): Int {
+    val impossibleStartingLocations = mutableSetOf<Pair<Int, Int>>()
+    val pathLengths = grid.flatMapIndexed() { rowIndex, line ->
+        line.mapIndexedNotNull { columnIndex, char ->
+            val startingLocation = rowIndex to columnIndex
+            println(startingLocation)
+            if(startingLocation.getHeight(grid) != 1) return@mapIndexedNotNull null
+            if (impossibleStartingLocations.contains(startingLocation)) return@mapIndexedNotNull null
+
+            val pathFinder = AStarPathFinder(
+                grid,
+                AStarNode(startingLocation, null, 0, startingLocation.distanceBetween(end)),
+                AStarNode(end, null, 0, 0)
+            )
+
+            try {
+                val path = pathFinder.findShortestPath()
+                path.currentPathLength
+            } catch(e: Throwable) {
+                pathFinder.closedList.forEach { impossibleStartingLocations.add(it.location) }
+                null
+            }
+        }
+    }
+
+    return pathLengths.minOf { it }
 }
 
 fun printPath(node: AStarNode, input: List<String>) {
@@ -57,90 +96,97 @@ fun printPath(node: AStarNode, input: List<String>) {
     print("\n")
 }
 
+class AStarPathFinder(
+    private val grid: List<List<Int>>,
+    private val start: AStarNode,
+    private val end: AStarNode
+    ) {
+    val openList = PriorityQueue(AStarNodeComparator())
+    val closedList = mutableSetOf<AStarNode>()
 
-data class AStarNode(
-    val location: Pair<Int, Int>,
-    val previous: AStarNode?,
-    val currentPathLength: Int,
-    val fValue: Int = 0,
-)
+    fun findShortestPath(): AStarNode {
+        openList.add(start)
 
-val openList = PriorityQueue(AStarNodeComparator())
-val closedList = mutableSetOf<AStarNode>()
+        do {
+            val currentNode = openList.remove()
+            if(currentNode.location == end.location) return currentNode
 
-private fun aStar(grid: List<List<Int>>, start: AStarNode, end: AStarNode): AStarNode {
-    openList.add(start)
+            closedList.add(currentNode)
+            expandNode(currentNode)
+        } while(!openList.isEmpty())
+        error("No Path Found")
+    }
 
-    do {
-        val currentNode = openList.remove()
-        if(currentNode.location == end.location) return currentNode
+    private fun expandNode(node: AStarNode) {
+        val neighbours = node.getNeighbours()
 
-        closedList.add(currentNode)
-        expandNode(currentNode, grid, end)
-    } while(!openList.isEmpty())
-    error("No Path Found")
-}
+        neighbours.forEach { neighbour ->
+            if(closedList.find { it.location == neighbour.location } != null) return@forEach
 
-fun expandNode(node: AStarNode, grid: List<List<Int>>, end: AStarNode) {
-    val neighbours = node.getNeighbours(grid, end.location)
+            val nodeInOpenList = openList.find { it.location == neighbour.location }
+            if(nodeInOpenList != null) {
+                if(nodeInOpenList.currentPathLength <= neighbour.currentPathLength) return@forEach
+            }
 
-    neighbours.forEach { neighbour ->
-        if(closedList.find { it.location == neighbour.location } != null) return@forEach
+            if(nodeInOpenList != null) openList.remove(nodeInOpenList)
+            openList.add(neighbour)
+        }
+    }
 
-        val nodeInOpenList = openList.find { it.location == neighbour.location }
-        if(nodeInOpenList != null) {
-            if(nodeInOpenList.currentPathLength <= neighbour.currentPathLength) return@forEach
+    private fun AStarNode.getNeighbours(): List<AStarNode> {
+        val potentialNeighbours = listOf(
+            1 to 0,
+            0 to 1,
+            -1 to 0,
+            0 to -1,
+        ).map { it + this.location }
+
+        val possibleHeight = this.location.getHeight(grid) + 1
+
+        val neighbours = potentialNeighbours.filter { potentialNeighbour ->
+            if(potentialNeighbour == this.previous?.location) return@filter false
+            if(!grid.isInBounds(potentialNeighbour)) return@filter false
+
+            potentialNeighbour.getHeight(grid) <= possibleHeight
         }
 
-        if(nodeInOpenList != null) openList.remove(nodeInOpenList)
-        openList.add(neighbour)
+        return neighbours.map { location ->
+            val g = this.currentPathLength + 1
+            val f = g + location.distanceBetween(end.location)
+            AStarNode(location, this, g, f)
+        }
+    }
+
+    private fun<T> List<List<T>>.isInBounds(index: Pair<Int, Int>): Boolean {
+        if(this.isEmpty()) return false
+        if(index.first < 0 || index.second < 0) return false
+
+        val rowAmount = this.size
+        val columnAmount = this.first().size
+
+        if(index.first >= rowAmount || index.second >= columnAmount) return false
+        return true
+    }
+
+    data class AStarNode(
+        val location: Pair<Int, Int>,
+        val previous: AStarNode?,
+        val currentPathLength: Int,
+        val fValue: Int = 0,
+    )
+
+    private class AStarNodeComparator : Comparator<AStarNode> {
+        override fun compare(first: AStarNode, second: AStarNode) = first.fValue.compareTo(second.fValue)
     }
 }
 
-fun AStarNode.getNeighbours(grid: List<List<Int>>, end: Pair<Int, Int>): List<AStarNode> {
-    val potentialNeighbours = listOf(
-        1 to 0,
-        0 to 1,
-        -1 to 0,
-        0 to -1,
-    ).map { it + this.location }
 
-    val possibleHeight = this.location.getHeight(grid) + 1
 
-    val neighbours = potentialNeighbours.filter { potentialNeighbour ->
-        if(potentialNeighbour == this.previous?.location) return@filter false
-        if(!grid.isInBounds(potentialNeighbour)) return@filter false
-
-        potentialNeighbour.getHeight(grid) <= possibleHeight
-    }
-
-    return neighbours.map { location ->
-        val g = this.currentPathLength + 1
-        val f = g + location.distanceBetween(end)
-        AStarNode(location, this, g, f)
-    }
-}
-
-fun<T> List<List<T>>.isInBounds(index: Pair<Int, Int>): Boolean {
-    if(this.isEmpty()) return false
-    if(index.first < 0 || index.second < 0) return false
-
-    val rowAmount = this.size
-    val columnAmount = this.first().size
-
-    if(index.first >= rowAmount || index.second >= columnAmount) return false
-    return true
-}
-
-internal class AStarNodeComparator : Comparator<AStarNode> {
-    override fun compare(first: AStarNode, second: AStarNode) = first.fValue.compareTo(second.fValue)
-}
-
-fun Pair<Int,Int>.getHeight(grid: List<List<Int>>) = grid[this.first][this.second]
+private fun Pair<Int,Int>.getHeight(grid: List<List<Int>>) = grid[this.first][this.second]
 private operator fun Pair<Int, Int>.plus(other: Pair<Int, Int>) = this.first + other.first to this.second + other.second
 private operator fun Pair<Int, Int>.minus(other: Pair<Int, Int>) = Pair(this.first - other.first, this.second - other.second)
 private fun Pair<Int, Int>.distanceBetween(other: Pair<Int, Int>): Int {
     val delta = this - other
     return delta.first.absoluteValue + delta.second.absoluteValue
 }
-fun Char.toHeight() = this.code - 96
+private fun Char.toHeight() = this.code - 96
