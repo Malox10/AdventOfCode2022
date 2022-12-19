@@ -180,8 +180,6 @@ class AStarPathFinder(
     }
 }
 
-
-
 private fun Pair<Int,Int>.getHeight(grid: List<List<Int>>) = grid[this.first][this.second]
 private operator fun Pair<Int, Int>.plus(other: Pair<Int, Int>) = this.first + other.first to this.second + other.second
 private operator fun Pair<Int, Int>.minus(other: Pair<Int, Int>) = Pair(this.first - other.first, this.second - other.second)

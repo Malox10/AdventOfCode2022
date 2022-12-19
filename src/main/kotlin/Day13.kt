@@ -10,7 +10,7 @@ fun main() {
 }
 
 typealias PacketPairs = Pair<Packet.Lists, Packet.Lists>
-fun parseInput(input: List<String>): List<PacketPairs> {
+private fun parseInput(input: List<String>): List<PacketPairs> {
     val unparsedPairs = input.chunked(3).map { it[0] to it[1] }
     val packetPairs = unparsedPairs.map { pair ->
         val (first, second) = pair.toList().map {

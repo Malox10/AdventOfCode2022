@@ -103,7 +103,6 @@ class Monkey(
     private fun inspectItem() = action(queue.remove()).also { inspectCount++ }
     private fun Long.reduceWorry() = floor((this / 3).toDouble()).toLong()
     private fun Long.reduceWorryPart2() = this % stressReducerModulo
-
 }
 
 data class Test(
