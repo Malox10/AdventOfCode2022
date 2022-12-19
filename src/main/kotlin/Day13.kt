@@ -1,11 +1,16 @@
+@file:Suppress("unused")
+import java.util.Comparator
+
 fun main() {
     val input = readResourceLines("Day13.txt")
-    val output = findNumberOfMatchingPacketPairs(input)
-    println("$output")
+//    val output = findNumberOfMatchingPacketPairs(input)
+//    println("The sum of matching packet indices are: $output")
+    val output = orderPackets(input)
+    println("The product of decoder keys is: $output")
 }
 
 typealias PacketPairs = Pair<Packet.Lists, Packet.Lists>
-fun findNumberOfMatchingPacketPairs(input: List<String>): Int {
+fun parseInput(input: List<String>): List<PacketPairs> {
     val unparsedPairs = input.chunked(3).map { it[0] to it[1] }
     val packetPairs = unparsedPairs.map { pair ->
         val (first, second) = pair.toList().map {
@@ -17,13 +22,40 @@ fun findNumberOfMatchingPacketPairs(input: List<String>): Int {
         first to second
     }
 
+    return packetPairs
+}
+
+//Part 1
+fun findNumberOfMatchingPacketPairs(input: List<String>): Int {
+    val packetPairs = parseInput(input)
     val states = packetPairs.map { comparePackets(it) }
     val output = states.mapIndexedNotNull { index, state ->
-        if( state == State.InOrder) index + 1 else null
+        if(state == State.InOrder) index + 1 else null
     }.sum()
     return output
 }
 
+//Part 2
+fun orderPackets(input: List<String>): Int {
+    val inputWithDividerPackets = input.toMutableList() + listOf("\n", "[[2]]", "[[6]]")
+    val packets = parseInput(inputWithDividerPackets).flatMap { it.toList() }.toMutableList()
+
+    val (firstDivider, secondDivider) = packets.takeLast(2)
+    packets.sortWith(PacketComparator())
+
+    val firstIndex = packets.indexOf(firstDivider) + 1
+    val secondIndex = packets.indexOf(secondDivider) + 1
+    return firstIndex * secondIndex
+}
+
+private class PacketComparator : Comparator<Packet.Lists> {
+    override fun compare(first: Packet.Lists, second: Packet.Lists) =
+        when (comparePackets(first to second)) {
+            State.InOrder -> -1
+            State.Continue -> 0
+            State.OutOfOrder -> 1
+        }
+}
 
 fun comparePackets(pairs: PacketPairs): State {
     val (first, second) = pairs
