@@ -1,10 +1,10 @@
 fun main() {
     val input = readResourceLines("Day14.txt")
-    val output = findNumerOfRestingSandCorns(input)
+    val output = findNumberOfRestingSandCorns(input)
     println("The number of resting Sandcorns is: $output")
 }
 
-fun findNumerOfRestingSandCorns(input: List<String>): Int {
+fun findNumberOfRestingSandCorns(input: List<String>): Int {
     val sandSimulator = parseInput(input)
     sandSimulator.print()
     return sandSimulator.simulateSand()
@@ -21,14 +21,25 @@ private fun parseInput(input: List<String>): SandSimulator {
 
     val xMin = coordList.first.min()
     val xMax = coordList.first.max()
-    val width = xMax - xMin + 1
 
     val yMax = coordList.second.max()
-    val offset = xMin to 0
 
-    val grid = List(yMax + 1) { CharArray(width) { '.' } }
+//    val width = xMax - xMin + 1
+//    val offset = xMin to 0
+//    val grid = List(yMax + 1) { CharArray(width) { '.' } }
+//    return SandSimulator(offset, grid, input)
 
-    return SandSimulator(offset, grid, input)
+    val startX = xMin - yMax
+    val endX = xMax + yMax
+    val height = yMax + 2
+    val bottomFloorString = "$startX,$height -> $endX,$height"
+
+    val offset = startX to 0
+
+    val inputWithFloor = input + listOf(bottomFloorString)
+    val grid = List(height + 1) { CharArray(endX - startX + 1) { '.' } }
+
+    return SandSimulator(offset, grid, inputWithFloor)
 }
 
 class SandSimulator(
@@ -76,7 +87,11 @@ class SandSimulator(
             if(isInBounds) {
                 restingSandCount++
                 spawnSand()
-                print()
+            }
+            //Part2
+            if(grid[sandStartingPosition.second][sandStartingPosition.first] == 'o') {
+                this.print()
+                return restingSandCount
             }
         } while(isInBounds)
 
