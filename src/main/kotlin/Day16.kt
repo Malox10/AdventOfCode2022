@@ -131,7 +131,7 @@ fun calculatePressure(state: SearchState): Pair<Int, String> {
     val pressureAndPath = state.remainingValves.map { target ->
         val (destination, travelTime) = state.currentValve.connections?.get(target)!!
         val newRemainingTime = state.remainingTime - travelTime
-        if(state.remainingTime < 0) return@map state.totalReleasedPressure to state.currentPath
+        if(newRemainingTime < 0) return@map state.totalReleasedPressure to state.currentPath
 
         val newPath = state.currentPath + " to $target at $newRemainingTime"
         val newReleasedPressure = (newRemainingTime * destination.flowRate) + state.totalReleasedPressure
