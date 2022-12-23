@@ -1,7 +1,11 @@
+import java.util.*
+import kotlin.system.measureTimeMillis
+
 fun main() {
     val input = readResourceLines("Day16.txt")
-    val output = findMaxPressure(input)
-    println("$output")
+//    val output = findMaxPressure(input)
+    val output = part2(input)
+    println("The maximum pressure released is: $output")
 }
 
 //too low 1863
@@ -61,7 +65,7 @@ private fun parseInput(input: List<String>): List<Valve> {
     }
 
     //assign the map to each valve mapping name, to the next node and the associated cost of traveling there and activating the node
-    valves.forEach { valve -> valve.connections = newDestinations[valve]!! }
+    valves.forEach { valve -> valve.travelTimes = newDestinations[valve]!! }
 
     return valves
 }
@@ -118,6 +122,73 @@ fun findMaxPressure(input: List<String>): Int {
     return pressure
 }
 
+fun findCombinedMaxPressure(input: List<String>): Int {
+    val valves = parseInput(input)
+    val valveStrings = valves.map { it.name }.toSet()
+    val startingValve = valves.find { it.name == startingNodeName }!!
+
+    val agent = Agent(startingValve, 26)
+
+//    return calculateDuoPressure(
+//        state = DuoSearchState(
+//            human = agent,
+//            elephant = agent,
+//            totalReleasedPressure = 0,
+//            remainingValves = valveStrings.subtract(setOf(startingValve.name))
+//        )
+//    )
+    return 0
+}
+
+fun part2(input: List<String>): Int {
+    val valves = parseInput(input)
+    val startingValve = valves.find { it.name == startingNodeName }!!
+
+    var result = 0
+
+    val human = Agent(startingValve, 26)
+    val elapsedTime = measureTimeMillis {
+        val paths = calculateAllPathsWithPressure(human, valves.toSet() - setOf(startingValve), 0)
+        println(paths.size)
+
+        val map = mutableMapOf<RemainingValves, Int>()
+        paths.forEach { (key, value) ->
+            if (!map.contains(key)) map[key] = value
+            if(map[key]!! >= value) return@forEach
+            map[key] = value
+        }
+
+
+        val maximumReleasedPressure = map.toList().mapIndexed { index, (remainingValves, humanReleasedPressure) ->
+            val elephant = Agent(startingValve, 26)
+            val elephantReleasedPressure = calculateSinglePressureCached(
+                elephant,
+                remainingValves,
+                0
+            )
+            println(index)
+
+            //this is the most vile thing I've ever written, yikes xD
+            //I should optimize how aggressive I'm caching, caching every inbetween doesn't make sense
+            if(index % 500 == 0) mostEfficientSinglePaths.clear()
+//            if(
+//                remainingValves.find { it.name == "DD" } != null
+//                && remainingValves.find { it.name == "HH" } != null
+//                && remainingValves.find { it.name == "EE" } != null
+//            ) {
+//                println("best rotation found $remainingValves, $humanReleasedPressure, $elephantReleasedPressure")
+//            }
+
+            elephantReleasedPressure + humanReleasedPressure
+        }.max()
+
+        result = maximumReleasedPressure
+    }
+
+    println("elapsed time was: $elapsedTime")
+    return result
+}
+
 data class SearchState(
     val currentValve: Valve,
     val totalReleasedPressure: Int,
@@ -129,7 +200,7 @@ data class SearchState(
 fun calculatePressure(state: SearchState): Pair<Int, String> {
     if(state.remainingValves.isEmpty()) return state.totalReleasedPressure to state.currentPath
     val pressureAndPath = state.remainingValves.map { target ->
-        val (destination, travelTime) = state.currentValve.connections?.get(target)!!
+        val (destination, travelTime) = state.currentValve.travelTimes?.get(target)!!
         val newRemainingTime = state.remainingTime - travelTime
         if(newRemainingTime < 0) return@map state.totalReleasedPressure to state.currentPath
 
@@ -151,14 +222,94 @@ fun calculatePressure(state: SearchState): Pair<Int, String> {
     return pressureAndPath
 }
 
+data class DuoSearchState(
+    val human: Agent,
+    val elephant: Agent,
+    val totalReleasedPressure: Int,
+    val remainingValves: Set<String>
+)
+
+//fun calculateDuoPressure(state: DuoSearchState): Int {
+//    if(state.remainingValves.isEmpty()) return state.totalReleasedPressure
+//    //there's at least on valve remaining
+//
+//    val canHumanContinue = state.human.canContinue()
+//    val canElephantContinue = state.elephant.canContinue()
+//    val numberOfActiveAgents = if(canHumanContinue && canElephantContinue) 2 else if (canElephantContinue || canHumanContinue) 1 else 0
+//
+//    if(numberOfActiveAgents == 0) return state.totalReleasedPressure
+//    if(numberOfActiveAgents == 1) {
+//        val lastAgent = if(canHumanContinue) state.human else state.elephant
+//        return state.remainingValves.maxOf { valve ->
+//            val (newAgent, releasedPressure)  = lastAgent.travelToAndOpenValve(valve)
+//            val newRemainingValves =
+//                if(newAgent.hasArrived()) state.remainingValves - setOf(valve) else return state.totalReleasedPressure
+//
+//            calculatePressure(SearchState(
+//                newAgent.currentValve,
+//                state.totalReleasedPressure + releasedPressure,
+//                newAgent.remainingTime,
+//                newRemainingValves
+//            )).first
+////            releasedPressure + calculateDuoPressure(state.copy(
+////                human = if(canHumanContinue) lastAgent else state.human,
+////                elephant = if(canElephantContinue) lastAgent else state.elephant,
+////                totalReleasedPressure = state.totalReleasedPressure + releasedPressure,
+////                remainingValves = newRemainingValves
+////            ))
+//        }
+//    }
+//    //Both Agents can continue
+//
+//    if(state.remainingValves.size == 1) {
+//        val lastValve = state.remainingValves.first()
+//        return maxOf(
+//                state.human.travelToAndOpenValve(lastValve).second,
+//                state.elephant.travelToAndOpenValve(lastValve).second
+//        ) + state.totalReleasedPressure
+//    }
+//    //Both agents can continue and there are 2 or more valves left.
+//
+//    val highestCombinedReleasedPressure = state.remainingValves.flatMap { firstValve ->
+//        val (newHumanAgent, humanReleasedPressure) = state.human.travelToAndOpenValve(firstValve)
+//        val newRemainingValves =
+//            if(newHumanAgent.hasArrived())  state.remainingValves - setOf(firstValve) else state.remainingValves
+//
+//        val elephantPressure = newRemainingValves.map { secondValve ->
+//            val (newElephantAgent, elephantReleasedPressure) = state.elephant.travelToAndOpenValve(secondValve)
+//            val newerRemainingValves =
+//                if(newElephantAgent.hasArrived())  newRemainingValves - setOf(secondValve) else newRemainingValves
+//
+//            val pressure= calculateDuoPressure(DuoSearchState(
+//                newHumanAgent,
+//                newElephantAgent,
+//                state.totalReleasedPressure + elephantReleasedPressure + humanReleasedPressure,
+//                newerRemainingValves
+//            ))
+//            pressure
+//        }
+//
+//        elephantPressure + humanReleasedPressure
+//    }.max()
+//    return highestCombinedReleasedPressure
+//}
+
 data class Valve(
     val name: String,
     val flowRate: Int,
-    var connections: Map<String, Pair<Valve, Int>>?
-)
+    var travelTimes: Map<String, Pair<Valve, Int>>?
+) {
+    override fun toString() = this.name
+
+    override fun hashCode(): Int {
+        return Objects.hash(this.name)
+    }
+}
 
 data class ValveNode(
     val name: String,
     val flowRate: Int,
     val connections: Set<String>,
 )
+
+//idea: do human then elephant?
