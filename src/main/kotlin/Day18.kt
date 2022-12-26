@@ -1,3 +1,5 @@
+import java.util.*
+
 fun main() {
     val input = readResourceLines("Day18.txt")
     val output = findAmountOfCubeSides(input)
@@ -26,7 +28,10 @@ fun findAmountOfCubeSides(input: List<String>): Int {
     val dimensions = Cube(maxZ - minZ + 1, maxY - minY + 1, maxX - minX + 1)
     val offset = Cube(minZ, minY, minX)
     val space = Space(cubes, offset, dimensions)
-    return space.calculateSides()
+//    return space.calculateSides()
+
+    space.findContainedSubGraphs()
+    return space.calculateSidesPart2()
 }
 
 private class Space(
@@ -51,12 +56,85 @@ private class Space(
         return cubes.sumOf { cube ->
             val neighbourCount = CubeDirection.values().count { direction ->
                 val neighbour = cube + direction.offset
-                val hasNeighbour = inner.getOrNull(neighbour.z - offset.z)?.getOrNull(neighbour.y - offset.y)?.getOrNull(neighbour.x - offset.x)
-                hasNeighbour ?: false
+                isLava(neighbour)
             }
 
             6 - neighbourCount
         }
+    }
+
+    fun calculateSidesPart2(): Int {
+        return cubes.sumOf { cube ->
+            val neighbourCount = CubeDirection.values().count { direction ->
+                val neighbour = cube + direction.offset
+                isLava(neighbour) || insideSet.contains(neighbour)
+            }
+
+            6 - neighbourCount
+        }
+    }
+
+    fun isLava(cubeToCheck: Cube): Boolean {
+        val hasNeighbour = inner.getOrNull( cubeToCheck.z - offset.z)?.getOrNull(cubeToCheck.y - offset.y)?.getOrNull(cubeToCheck.x - offset.x)
+        return hasNeighbour ?: false
+    }
+
+    val outsideSet = mutableSetOf<Cube>()
+    val insideSet = mutableSetOf<Cube>()
+    fun findContainedSubGraphs() {
+        inner.forEachIndexed { z, slice ->
+            slice.forEachIndexed { y, line ->
+                line.forEachIndexed inner@{ x, isLava ->
+                    if(isLava) return@inner
+                    val currentCube = Cube(z + offset.z, y + offset.y, x + offset.x) //to make debugging easier
+
+                    if(outsideSet.contains(currentCube) || insideSet.contains(currentCube)) return@inner
+                    expandSubgraph(currentCube)
+                }
+            }
+        }
+    }
+
+    private fun expandSubgraph(cubeToExpand: Cube) {
+        var subGraphTouchesOutside = cubeToExpand.isOutsideOfSpace()
+
+        val checkedCubes = mutableListOf<Cube>()
+        val cubesToCheck: Queue<Cube> = LinkedList(listOf(cubeToExpand))
+        while (cubesToCheck.isNotEmpty()) {
+            val cubeToCheck = cubesToCheck.remove()
+            if(checkedCubes.contains(cubeToCheck)) continue
+
+            CubeDirection.values().forEach { direction ->
+                val potentialNeighbour = direction.offset + cubeToCheck
+                if(checkedCubes.contains(potentialNeighbour) || cubesToCheck.contains(potentialNeighbour)) return@forEach
+
+                if(isLava(potentialNeighbour)) return@forEach
+                if(potentialNeighbour.isOutsideOfSpace()) {
+                    subGraphTouchesOutside = true
+                    return@forEach
+                }
+                //add air cube, that is inside the space and hasn't been checked before
+                cubesToCheck.add(potentialNeighbour)
+                checkedCubes.add(cubeToCheck)
+            }
+        }
+
+        val outputSet = if(subGraphTouchesOutside) outsideSet else insideSet
+        outputSet.add(cubeToExpand)
+        outputSet.addAll(checkedCubes)
+    }
+
+    private fun Cube.isOutsideOfSpace(): Boolean {
+        val output = inner.getOrNull(this.z - offset.z)?.getOrNull(this.y - offset.y)?.getOrNull(this.x - offset.x)
+        return output == null
+    }
+
+    private fun Cube.isOnOutsideEdge(): Boolean {
+        if(this.x == 1 || this.y == 1 || this.z == 1) return true
+        if(this.z == inner.size) return true
+        if(this.y == inner.first().size) return true
+        if(this.x == inner.first().first().size) return true
+        return false
     }
 }
 
