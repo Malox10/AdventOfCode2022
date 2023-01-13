@@ -1,6 +1,7 @@
 fun main() {
     val input = readResourceLines("Day23.txt")
-    val output = findEmptySpace(input)
+//    val output = findEmptySpace(input)
+    val output = findFinishedPositionSpace(input)
     println("The amount of unoccupied spaces is: $output")
 }
 
@@ -22,14 +23,31 @@ fun findEmptySpace(input: List<String>): Int {
     return unstableDiffusion.diffuse()
 }
 
+fun findFinishedPositionSpace(input: List<String>): Int {
+    val elves = parseElves(input)
+    val unstableDiffusion = UnstableDiffusion(elves.toSet())
+    return unstableDiffusion.diffuse(isPart2 = true)
+}
+
 
 class UnstableDiffusion(
     private var elfPositions: Set<Elf>,
 ) {
-    fun diffuse(): Int {
-        repeat(10) {
-            print()
-            doOneCycle()
+    fun diffuse(isPart2: Boolean = false): Int {
+        if(!isPart2) {
+            repeat(10) {
+                print()
+                doOneCycle()
+            }
+        } else {
+            var count = 0
+            do {
+                count++
+                print()
+                val finished = doOneCycle()
+            } while (!finished)
+
+            return count
         }
 
         val minRow = elfPositions.minOf { it.first }
@@ -44,7 +62,7 @@ class UnstableDiffusion(
         return boardSize - elfPositions.size
     }
 
-    private fun doOneCycle() {
+    private fun doOneCycle(): Boolean {
         val proposedMoves: MutableMap<Elf, MutableList<Elf>> = mutableMapOf()
         val edgeOffsets = LoopedOffsets.getOffsets()
         LoopedOffsets.rotate()
@@ -65,11 +83,14 @@ class UnstableDiffusion(
             false
         }
 
+        if(notMovingElves.size == elfPositions.size) return true
+
         val newPositions = proposedMoves.flatMap { (intendedPosition, elves) ->
             if (elves.size > 1) elves.toList() else listOf(intendedPosition)
         }
 
         elfPositions = (notMovingElves + newPositions).toSet()
+        return false
     }
 
     private fun findMoveDirection(elf: Elf, offsets: List<Pair<Direction, List<Pair<Int, Int>>>>): Direction? {
