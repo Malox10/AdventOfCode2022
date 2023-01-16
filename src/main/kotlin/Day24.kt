@@ -3,7 +3,7 @@ import kotlin.Comparator
 import kotlin.math.absoluteValue
 
 fun main() {
-    val input = readResourceLines("Day24Test.txt")
+    val input = readResourceLines("Day24.txt")
 //    val output = findShortestPath(input)
     val output = findShortestPathToRetrieveSnack(input)
     println("The shortest path takes: $output minutes")
@@ -42,7 +42,7 @@ fun findShortestPathToRetrieveSnack(input: List<String>): Int {
     val secondStartPosition = BlizzardMaze.Position(mazeStart, secondPath, 0)
     val thirdPath = maze.search(secondStartPosition, maze.mazeGoal)
 
-    return firstPath + secondPath + thirdPath
+    return thirdPath
 }
 
 typealias Layout = Set<Pair<Int, Int>>
@@ -76,6 +76,9 @@ private class BlizzardMaze(
     private val reachedPositions = mutableSetOf<Position>()
     private val priorityQueue = PriorityQueue(PositionComparator())
     fun search(startPosition: Position, goal: Pair<Int, Int>): Int {
+        reachedPositions.clear()
+        priorityQueue.clear()
+
         priorityQueue.add(startPosition)
 
         while(priorityQueue.isNotEmpty()) {
@@ -89,10 +92,9 @@ private class BlizzardMaze(
                 if(nextLocation == goal) return nextTime
                 if(nextLocation != startPosition.location) {
                     if(nextLocation.first < 0 || nextLocation.second < 0) return@mapNotNull null
-                    if(nextLocation.second < 0) return@mapNotNull null
+                    if(nextLocation.first >= height || nextLocation.second >= width) return@mapNotNull null
                 }
 
-                if(nextLocation.first >= height || nextLocation.second >= width) return@mapNotNull null
                 if(nextLayout.contains(nextLocation)) return@mapNotNull null
 
                 val delta = mazeGoal - nextLocation
@@ -100,6 +102,7 @@ private class BlizzardMaze(
 
 //                println("minute $nextTime")
 //                nextLayout.print(nextLocation)
+
                 val nextPosition = Position(nextLocation, nextTime, priority)
                 if(reachedPositions.contains(nextPosition)) return@mapNotNull null
 
