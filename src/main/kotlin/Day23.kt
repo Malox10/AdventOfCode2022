@@ -1,9 +1,12 @@
+@file:Suppress("unused")
+
 fun main() {
     val input = readResourceLines("Day23.txt")
 //    val output = findEmptySpace(input)
     val output = findFinishedPositionSpace(input)
     println("The amount of unoccupied spaces is: $output")
 }
+
 
 typealias Elf = Pair<Int, Int>
 
